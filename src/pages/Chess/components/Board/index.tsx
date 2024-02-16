@@ -16,7 +16,7 @@ function Board() {
   const { history, handleSetHistory }: any = useHistory();
 
   const [chessBoard, setChessBoard] = useState<string[][]>([[]]);
-  const [turn, setTurn] = useState(WHITE_TURN === "w");
+  const [turn, setTurn] = useState(WHITE_TURN);
   const [isDirty, setIsDirty] = useState(false);
   const [selectedChessPiece, setSelectedChessPiece] = useState(EMPTY_SELECTED);
 
@@ -41,37 +41,41 @@ function Board() {
     setSelectedChessPiece(selectedSquare);
   };
 
+  const handleToggleTurn = (item: string) => {
+    const turn = item[0] === WHITE_TURN ? BLACK_TURN : WHITE_TURN;
+    setTurn(turn);
+  };
+
   const handlePawnMove = (nextPosition: number[], nextItem: string) => {
     const { item, position } = selectedChessPiece;
     //Kiểm tra khi vào game, quân đen không được đi trước
     if (handleFisrtMove(selectedChessPiece, isDirty)) {
       setSelectedChessPiece(EMPTY_SELECTED);
     }
+    //Kiểm tra lượt chơi
+    if (turn !== item[0]) {
+      setSelectedChessPiece(EMPTY_SELECTED);
+      return;
+    }
 
     const site = item[0];
-    switch (site) {
-      case WHITE_TURN:
-        let isValidMove = false;
-        if (position[0] === 6) {
-          isValidMove =
-            position[0] - nextPosition[0] <= 2 &&
-            position[0] - nextPosition[0] >= 1 &&
-            nextPosition[1] === position[1];
-        } else {
-          isValidMove =
-            position[0] - nextPosition[0] === 1 &&
-            nextPosition[1] === position[1];
-        }
-        if (isValidMove) {
-          const newChessBoard = chessBoard;
-          newChessBoard[nextPosition[0]][nextPosition[1]] = item;
-          newChessBoard[position[0]][position[1]] = "";
-          setChessBoard(newChessBoard);
-          setIsDirty(true);
-          setTurn((prevState) => !prevState);
-          handleSetHistory(position, item, nextPosition, nextItem);
-        }
-        break;
+    const startPostion = site === WHITE_TURN ? 6 : 1;
+    const limitMove = Math.abs(position[0] - nextPosition[0]);
+    let isValidMove = false;
+    if (position[0] === startPostion) {
+      isValidMove =
+        limitMove <= 2 && limitMove >= 1 && nextPosition[1] === position[1];
+    } else {
+      isValidMove = limitMove === 1 && nextPosition[1] === position[1];
+    }
+    if (isValidMove) {
+      const newChessBoard = chessBoard;
+      newChessBoard[nextPosition[0]][nextPosition[1]] = item;
+      newChessBoard[position[0]][position[1]] = "";
+      setChessBoard(newChessBoard);
+      setIsDirty(true);
+      handleToggleTurn(item);
+      handleSetHistory(position, item, nextPosition, nextItem);
     }
   };
 
