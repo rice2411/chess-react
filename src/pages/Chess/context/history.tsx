@@ -1,5 +1,6 @@
 import { useState, createContext } from "react";
 import { IHistory } from "../interface/history";
+import { ETypeMove } from "../enum/type_move";
 
 const HistoryContext = createContext({});
 
@@ -10,10 +11,11 @@ export const HistoryProvider = ({ children }: any) => {
     position: number[],
     item: string,
     nextPosition: number[],
-    nextItem: string
+    nextItem: string,
+    typeMove: ETypeMove
   ) => {
     const newHistory = history;
-    const historyItem = {
+    const historyItem: IHistory = {
       previous: {
         position: position,
         item: item,
@@ -22,6 +24,7 @@ export const HistoryProvider = ({ children }: any) => {
         position: nextPosition,
         item: nextItem ? nextItem : item,
       },
+      typeMove: typeMove,
     };
     newHistory.push(historyItem);
     setHistory(newHistory);

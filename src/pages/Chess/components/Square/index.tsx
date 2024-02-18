@@ -10,18 +10,15 @@ import {
 } from "../../constant/config";
 import { getChessPieceImage } from "../../utils";
 import { IHistory } from "../../interface/history";
+import { ISquare } from "../../interface/square";
 
 type Props = {
   id?: string;
   position: number[];
   item: string;
-  selectedChessPiece: {
-    position: number[];
-    item: string;
-  };
+  selectedChessPiece: ISquare;
   history: IHistory[];
   handleClickSquare: (position: number[], item: string) => void;
-  handlePawnMove: (nextPosition: number[], item: string) => void;
 };
 
 function Square({
@@ -31,7 +28,6 @@ function Square({
   selectedChessPiece,
   history,
   handleClickSquare,
-  handlePawnMove,
 }: Props) {
   const isBlackSquare = () => {
     const totalPostion = position[0] + position[1];
@@ -63,10 +59,34 @@ function Square({
   };
 
   const handleOnClick = () => {
-    if (item) {
+    if (item && selectedChessPiece.item === "") {
+      //Chọn quân cờ
       handleClickSquare(position, item);
+    } else if (selectedChessPiece.item[0] === item[0]) {
+      //Chọn quân cờ
+      handleClickSquare(position, item);
+    } else if (
+      selectedChessPiece.item &&
+      item &&
+      selectedChessPiece.item !== ""
+    ) {
+      // Bắt quân
+      selectedChessPiece.handleTake &&
+        selectedChessPiece.handleTake(
+          selectedChessPiece.item,
+          selectedChessPiece.position,
+          position,
+          item
+        );
     } else {
-      handlePawnMove(position, item);
+      // Di chuyển
+      selectedChessPiece.handleMove &&
+        selectedChessPiece.handleMove(
+          selectedChessPiece.item,
+          selectedChessPiece.position,
+          position,
+          item
+        );
     }
   };
 

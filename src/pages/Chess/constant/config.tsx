@@ -1,3 +1,5 @@
+import { ISquare } from "../interface/square";
+
 export const WHITE_TURN = "w";
 export const BLACK_TURN = "b";
 export const ROW = 8;
@@ -14,7 +16,9 @@ export const ROW_EIGHT = ["br", "bn", "bb", "bq", "bk", "bb", "bn", "br"];
 export const ROW_SEVEN = ["bp", "bp", "bp", "bp", "bp", "bp", "bp", "bp"];
 export const ROW_TWO = ["wp", "wp", "wp", "wp", "wp", "wp", "wp", "wp"];
 export const ROW_ONE = ["wr", "wn", "wb", "wq", "wk", "wb", "wn", "wr"];
-export const EMPTY_SELECTED = {
+export const EMPTY_SELECTED: ISquare = {
   position: [-1, -1],
   item: "",
+  handleMove: () => {},
+  handleTake: () => {},
 };

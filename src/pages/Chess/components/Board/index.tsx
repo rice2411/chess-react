@@ -10,7 +10,8 @@ import CenterContainer from "../../../../Components/CenterContainer";
 import Square from "../Square";
 import { initChessPiece } from "../../utils";
 import useHistory from "../../hooks/useHistory";
-import { handleFisrtMove } from "../../utils/chess_rule";
+import { PAWN_RULE } from "../../utils/pawn_rule";
+import { CHESS_RULE } from "../../utils/chess_rule";
 
 function Board() {
   const { history, handleSetHistory }: any = useHistory();
@@ -20,6 +21,7 @@ function Board() {
   const [isDirty, setIsDirty] = useState(false);
   const [selectedChessPiece, setSelectedChessPiece] = useState(EMPTY_SELECTED);
 
+  // Ma trận ô cờ 8x8
   const initMatrix = () => {
     let matrix: string[][] = [];
     for (let i = 0; i < ROW; i++) {
@@ -31,63 +33,103 @@ function Board() {
     }
     setChessBoard(matrix);
   };
-
+  //Click vào 1 ô
   const handleClickSquare = (position: number[], item: string) => {
+    //Click vào ô trống thì không quan tâm
     if (!item) {
       setSelectedChessPiece(EMPTY_SELECTED);
       return;
     }
-    const selectedSquare = { position, item };
+    //Lưu vị trí và quân cờ dc chọn
+    const selectedSquare = {
+      position,
+      item,
+      handleTake: getFunctionOfChessPiece(item[1])?.handlePawnTake,
+      handleMove: getFunctionOfChessPiece(item[1])?.handlePawnMove,
+    };
     setSelectedChessPiece(selectedSquare);
   };
-
+  // Đổi lượtt
   const handleToggleTurn = (item: string) => {
     const turn = item[0] === WHITE_TURN ? BLACK_TURN : WHITE_TURN;
     setTurn(turn);
   };
-
-  const handlePawnMove = (nextPosition: number[], nextItem: string) => {
-    const { item, position } = selectedChessPiece;
-    //Kiểm tra khi vào game, quân đen không được đi trước
-    if (handleFisrtMove(selectedChessPiece, isDirty)) {
-      setSelectedChessPiece(EMPTY_SELECTED);
+  // Gánlogic tương ứng cho quân cờ
+  const getFunctionOfChessPiece = (type: string) => {
+    switch (type) {
+      case "p":
+        return {
+          handlePawnMove,
+          handlePawnTake,
+        };
     }
-    //Kiểm tra lượt chơi
-    if (turn !== item[0]) {
-      setSelectedChessPiece(EMPTY_SELECTED);
+  };
+  //#region Logic của Tốt
+  const handlePawnMove = (
+    item: string,
+    position: number[],
+    nextPosition: number[],
+    nextItem: string
+  ) => {
+    if (
+      !CHESS_RULE.hanleValidationMove(
+        turn,
+        item,
+        setSelectedChessPiece,
+        isDirty
+      )
+    ) {
       return;
     }
 
-    const site = item[0];
-    const startPostion = site === WHITE_TURN ? 6 : 1;
-    const limitMove = Math.abs(position[0] - nextPosition[0]);
-    let isValidMove = false;
-    if (position[0] === startPostion) {
-      isValidMove =
-        limitMove <= 2 && limitMove >= 1 && nextPosition[1] === position[1];
-    } else {
-      isValidMove = limitMove === 1 && nextPosition[1] === position[1];
-    }
-    if (isValidMove) {
-      const newChessBoard = chessBoard;
-      newChessBoard[nextPosition[0]][nextPosition[1]] = item;
-      newChessBoard[position[0]][position[1]] = "";
-      setChessBoard(newChessBoard);
-      setIsDirty(true);
-      handleToggleTurn(item);
-      handleSetHistory(position, item, nextPosition, nextItem);
-    }
+    PAWN_RULE.onPawnMove({
+      position,
+      nextPosition,
+      chessBoard,
+      item,
+      nextItem,
+      history,
+      setChessBoard,
+      setIsDirty,
+      handleToggleTurn,
+      handleSetHistory,
+      setSelectedChessPiece,
+    });
   };
+
+  const handlePawnTake = (
+    item: string,
+    position: number[],
+    nextPosition: number[],
+    nextItem: string
+  ) => {
+    if (!CHESS_RULE.hanleValidationMove(turn, item, setSelectedChessPiece))
+      return;
+    PAWN_RULE.onPawnTake({
+      position,
+      nextPosition,
+      chessBoard,
+      item,
+      nextItem,
+      setChessBoard,
+      setIsDirty,
+      handleToggleTurn,
+      handleSetHistory,
+      setSelectedChessPiece,
+    });
+  };
+  //#endregion
 
   useEffect(() => {
     initMatrix();
   }, []);
+
   return (
     <CenterContainer>
-      {chessBoard.length > 2 &&
+      {chessBoard[0][0] !== "" &&
         chessBoard.map((itemRow, idxRow) => (
           <div className="flex" key={idxRow}>
-            {itemRow.map((itemCol, idxCol) => (
+            {itemRow.map((itemCol: string, idxCol) => (
               <Square
                 key={idxCol}
                 id={(idxRow + idxCol).toString()}
@@ -96,7 +138,6 @@ function Board() {
                 history={history}
                 selectedChessPiece={selectedChessPiece}
                 handleClickSquare={handleClickSquare}
-                handlePawnMove={handlePawnMove}
               ></Square>
             ))}
           </div>
