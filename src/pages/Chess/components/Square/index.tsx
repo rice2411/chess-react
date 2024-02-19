@@ -7,27 +7,47 @@ import {
   TEXT_WHITE_SQUARE_COLOR,
   WHITE_SQUARE_ACTIVED_COLOR,
   WHITE_SQUARE_COLOR,
+  WHITE_TURN,
 } from "../../constant/config";
 import { getChessPieceImage } from "../../utils";
 import { IHistory } from "../../interface/history";
 import { ISquare } from "../../interface/square";
+import Promotion from "../Promotion";
+import { useState } from "react";
 
 type Props = {
   id?: string;
   position: number[];
   item: string;
+  turn: string;
   selectedChessPiece: ISquare;
   history: IHistory[];
+  isPromotion: boolean;
+  selectedPosition: number[];
   handleClickSquare: (position: number[], item: string) => void;
+  setSelectedPosition: (position: number[]) => void;
+  setIsPromotion: (value: boolean) => void;
+  handlePawnPromotion: (
+    item: string,
+    position: number[],
+    nextPosition: number[],
+    nextItem: string
+  ) => void;
 };
 
 function Square({
   id,
   position,
+  turn,
   item,
   selectedChessPiece,
   history,
+  selectedPosition,
+  isPromotion,
   handleClickSquare,
+  setIsPromotion,
+  handlePawnPromotion,
+  setSelectedPosition,
 }: Props) {
   const isBlackSquare = () => {
     const totalPostion = position[0] + position[1];
@@ -58,7 +78,18 @@ function Square({
     }
   };
 
+  const handleCheckPromotion = () => {
+    return (
+      isPromotion &&
+      selectedPosition[0] === position[0] &&
+      selectedPosition[1] === position[1]
+    );
+  };
+
   const handleOnClick = () => {
+    setSelectedPosition(position);
+    if (isPromotion) return;
+
     if (item && selectedChessPiece.item === "") {
       //Chọn quân cờ
       handleClickSquare(position, item);
@@ -91,25 +122,36 @@ function Square({
   };
 
   return (
-    <div
-      onClick={handleOnClick}
-      id={id}
-      className={`h-24 w-24 caret-transparent ${handleDrawSquare()} ${handleDrawTextSquare()} ${handleActiveSquare()} ${
-        item && "cursor-grab"
-      } `}
-    >
-      {/* In ra số thứ tự ở vị trí cột đầu tiên bên trái */}
-      {position[1] == 0 && (
-        <p className="text-xl pl-2 absolute">{ROW - position[0]}</p>
-      )}
-      {/* In ra cột abcf ở hàng cuối cùng */}
-      {position[0] == ROW - 1 && (
-        <p className={`text-xl absolute mt-16 ml-20`}>
-          {COL_TEXT[position[1]]}
-        </p>
-      )}
-      <img className="" src={`${getChessPieceImage(item)}`} alt="" />
-    </div>
+    <>
+      <div
+        onClick={handleOnClick}
+        id={id}
+        className={`h-24 w-24 caret-transparent ${handleDrawSquare()} ${handleDrawTextSquare()} ${handleActiveSquare()} ${
+          item && "cursor-grab"
+        } `}
+      >
+        {handleCheckPromotion() && (
+          <Promotion
+            turn={turn}
+            setIsPromotion={setIsPromotion}
+            handlePawnPromotion={handlePawnPromotion}
+            position={selectedChessPiece.position}
+            nextPosition={position}
+          />
+        )}
+        {/* In ra số thứ tự ở vị trí cột đầu tiên bên trái */}
+        {position[1] == 0 && (
+          <p className="text-xl pl-2 absolute">{ROW - position[0]}</p>
+        )}
+        {/* In ra cột abcf ở hàng cuối cùng */}
+        {position[0] == ROW - 1 && (
+          <p className={`text-xl absolute mt-16 ml-20`}>
+            {COL_TEXT[position[1]]}
+          </p>
+        )}
+        <img className="" src={`${getChessPieceImage(item)}`} alt="" />
+      </div>
+    </>
   );
 }
 

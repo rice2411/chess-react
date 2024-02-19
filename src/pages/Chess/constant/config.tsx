@@ -16,6 +16,8 @@ export const ROW_EIGHT = ["br", "bn", "bb", "bq", "bk", "bb", "bn", "br"];
 export const ROW_SEVEN = ["bp", "bp", "bp", "bp", "bp", "bp", "bp", "bp"];
 export const ROW_TWO = ["wp", "wp", "wp", "wp", "wp", "wp", "wp", "wp"];
 export const ROW_ONE = ["wr", "wn", "wb", "wq", "wk", "wb", "wn", "wr"];
+export const WHITE_PROMOTION = ["wq", "wn", "wb", "wr"];
+export const BLACK_PROMOTION = ["bq", "bn", "bb", "br"];
 export const EMPTY_SELECTED: ISquare = {
   position: [-1, -1],
   item: "",

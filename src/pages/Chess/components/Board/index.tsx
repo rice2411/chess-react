@@ -10,8 +10,8 @@ import CenterContainer from "../../../../Components/CenterContainer";
 import Square from "../Square";
 import { initChessPiece } from "../../utils";
 import useHistory from "../../hooks/useHistory";
-import { PAWN_RULE } from "../../utils/pawn_rule";
-import { CHESS_RULE } from "../../utils/chess_rule";
+import PawnService from "../../service/pawn";
+import ChessBoardSerivce from "../../service/chess_board";
 
 function Board() {
   const { history, handleSetHistory }: any = useHistory();
@@ -20,6 +20,8 @@ function Board() {
   const [turn, setTurn] = useState(WHITE_TURN);
   const [isDirty, setIsDirty] = useState(false);
   const [selectedChessPiece, setSelectedChessPiece] = useState(EMPTY_SELECTED);
+  const [selectedPosition, setSelectedPosition] = useState([-1, -1]);
+  const [isPromotion, setIsPromotion] = useState(false);
 
   // Ma trận ô cờ 8x8
   const initMatrix = () => {
@@ -72,7 +74,7 @@ function Board() {
     nextItem: string
   ) => {
     if (
-      !CHESS_RULE.hanleValidationMove(
+      !ChessBoardSerivce.hanleValidationMove(
         turn,
         item,
         setSelectedChessPiece,
@@ -82,18 +84,20 @@ function Board() {
       return;
     }
 
-    PAWN_RULE.onPawnMove({
+    PawnService.onPawnMove({
       position,
       nextPosition,
       chessBoard,
       item,
       nextItem,
       history,
+      isPromotion,
       setChessBoard,
       setIsDirty,
       handleToggleTurn,
       handleSetHistory,
       setSelectedChessPiece,
+      setIsPromotion,
     });
   };
 
@@ -103,9 +107,33 @@ function Board() {
     nextPosition: number[],
     nextItem: string
   ) => {
-    if (!CHESS_RULE.hanleValidationMove(turn, item, setSelectedChessPiece))
+    if (
+      !ChessBoardSerivce.hanleValidationMove(turn, item, setSelectedChessPiece)
+    )
       return;
-    PAWN_RULE.onPawnTake({
+    PawnService.onPawnTake({
+      position,
+      nextPosition,
+      chessBoard,
+      item,
+      nextItem,
+      isPromotion,
+      setChessBoard,
+      setIsDirty,
+      handleToggleTurn,
+      handleSetHistory,
+      setSelectedChessPiece,
+      setIsPromotion,
+    });
+  };
+
+  const handlePawnPromotion = (
+    item: string,
+    position: number[],
+    nextPosition: number[],
+    nextItem: string
+  ) => {
+    PawnService.onPawnPromotion({
       position,
       nextPosition,
       chessBoard,
@@ -119,14 +147,13 @@ function Board() {
     });
   };
   //#endregion
-
   useEffect(() => {
     initMatrix();
   }, []);
 
   return (
     <CenterContainer>
-      {chessBoard[0][0] !== "" &&
+      {chessBoard.length &&
         chessBoard.map((itemRow, idxRow) => (
           <div className="flex" key={idxRow}>
             {itemRow.map((itemCol: string, idxCol) => (
@@ -134,8 +161,14 @@ function Board() {
                 key={idxCol}
                 id={(idxRow + idxCol).toString()}
                 position={[idxRow, idxCol]}
+                turn={turn}
                 item={itemCol}
                 history={history}
+                isPromotion={isPromotion}
+                selectedPosition={selectedPosition}
+                setSelectedPosition={setSelectedPosition}
+                setIsPromotion={setIsPromotion}
+                handlePawnPromotion={handlePawnPromotion}
                 selectedChessPiece={selectedChessPiece}
                 handleClickSquare={handleClickSquare}
               ></Square>
