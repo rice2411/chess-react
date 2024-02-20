@@ -70,8 +70,23 @@ class ChessBoardService {
       newChessBoard[position[0]][position[1]] = "";
     }
     const checkingObj = KingService.onHandleChecking(input, newChessBoard);
+
+    if (!isChecking) {
+      if (checkingObj.isKingMove) {
+        if (checkingObj.isChecking) return;
+      } else {
+        // console.log(isChecking);
+        // if (isChecking && !checkingObj.isKingMove) {
+        //   if (item[0] === checkingObj.site) {
+        //     return;
+        //   }
+        // }
+        setIsChecking(checkingObj.isChecking);
+      }
+    }
     console.log(checkingObj);
-    if (checkingObj.isChecking && checkingObj.site === item[0]) return;
+
+    // if (checkingObj.isChecking && checkingObj.site === item[0]) return;
     // if ((newIsChecking && !isChecking) || (!newIsChecking && isChecking)) {
     //   setIsChecking(newIsChecking);
     // } else if (newIsChecking && isChecking) {

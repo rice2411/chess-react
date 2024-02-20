@@ -31,7 +31,7 @@ export const initChessPiece = (
   switch (rowIdx) {
     case 0:
       if (colIdx == 4) row.push("bk");
-      else if (colIdx == 5) row.push("br");
+      else if (colIdx == 6) row.push("br");
       else row.push("");
       break;
     // case 1:
@@ -42,7 +42,7 @@ export const initChessPiece = (
     //   break;
     case 7:
       if (colIdx == 4) row.push("wk");
-      else if (colIdx == 3) row.push("wr");
+      else if (colIdx == 2) row.push("wr");
       else row.push("");
       break;
     default:
