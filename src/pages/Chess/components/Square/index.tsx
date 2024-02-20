@@ -7,13 +7,12 @@ import {
   TEXT_WHITE_SQUARE_COLOR,
   WHITE_SQUARE_ACTIVED_COLOR,
   WHITE_SQUARE_COLOR,
-  WHITE_TURN,
 } from "../../constant/config";
 import { getChessPieceImage } from "../../utils";
 import { IHistory } from "../../interface/history";
 import { ISquare } from "../../interface/square";
 import Promotion from "../Promotion";
-import { useState } from "react";
+import { useEffect } from "react";
 
 type Props = {
   id?: string;
@@ -27,12 +26,6 @@ type Props = {
   handleClickSquare: (position: number[], item: string) => void;
   setSelectedPosition: (position: number[]) => void;
   setIsPromotion: (value: boolean) => void;
-  handlePawnPromotion: (
-    item: string,
-    position: number[],
-    nextPosition: number[],
-    nextItem: string
-  ) => void;
 };
 
 function Square({
@@ -46,7 +39,6 @@ function Square({
   isPromotion,
   handleClickSquare,
   setIsPromotion,
-  handlePawnPromotion,
   setSelectedPosition,
 }: Props) {
   const isBlackSquare = () => {
@@ -64,18 +56,28 @@ function Square({
 
   const handleActiveSquare = () => {
     const lastMove = history[history.length - 1];
-    if (
-      (selectedChessPiece.position[0] == position[0] &&
-        selectedChessPiece.position[1] == position[1]) ||
-      (lastMove?.previous?.position[0] == position[0] &&
-        lastMove?.previous?.position[1] == position[1]) ||
-      (lastMove?.next?.position[0] == position[0] &&
-        lastMove?.next?.position[1] == position[1])
-    ) {
+    const isSelectedPosition =
+      selectedPosition[0] === position[0] &&
+      selectedPosition[1] === position[1] &&
+      item;
+    const isPreviousMove =
+      lastMove?.previous &&
+      lastMove.previous.position[0] === position[0] &&
+      lastMove.previous.position[1] === position[1];
+    const isNextMove =
+      lastMove?.next &&
+      lastMove.next.position[0] === position[0] &&
+      lastMove.next.position[1] === position[1];
+
+    if (isSelectedPosition || isPreviousMove || isNextMove) {
       return isBlackSquare()
         ? BLACK_SQUARE_ACTIVED_COLOR
         : WHITE_SQUARE_ACTIVED_COLOR;
     }
+  };
+
+  const handleDrawClass = () => {
+    return `${handleDrawSquare()} ${handleDrawTextSquare()} ${handleActiveSquare()}`;
   };
 
   const handleCheckPromotion = () => {
@@ -87,21 +89,31 @@ function Square({
   };
 
   const handleOnClick = () => {
+    // Lưu lại vị trí click
     setSelectedPosition(position);
+
+    // Đang hiển thị bảng phong cấp thì return
     if (isPromotion) return;
 
-    if (item && selectedChessPiece.item === "") {
-      //Chọn quân cờ
+    // Không có quân cờ nào được chọn, hoặc quân cờ được chọn cùng team
+    if (!selectedChessPiece.item || selectedChessPiece.item[0] === item[0]) {
       handleClickSquare(position, item);
-    } else if (selectedChessPiece.item[0] === item[0]) {
-      //Chọn quân cờ
-      handleClickSquare(position, item);
-    } else if (
+    } else {
+      // Thực hiện logic bắt quân
+      selectedChessPiece.handleTake &&
+        selectedChessPiece.handleTake(
+          selectedChessPiece.item,
+          selectedChessPiece.position,
+          position,
+          item
+        );
+    }
+    // Vẫn là logic bắt quân
+    if (
       selectedChessPiece.item &&
       item &&
-      selectedChessPiece.item !== ""
+      selectedChessPiece.item[0] !== item[0]
     ) {
-      // Bắt quân
       selectedChessPiece.handleTake &&
         selectedChessPiece.handleTake(
           selectedChessPiece.item,
@@ -110,7 +122,7 @@ function Square({
           item
         );
     } else {
-      // Di chuyển
+      // Di chuyển nếu ô tiếp theo hợp lệ
       selectedChessPiece.handleMove &&
         selectedChessPiece.handleMove(
           selectedChessPiece.item,
@@ -126,15 +138,15 @@ function Square({
       <div
         onClick={handleOnClick}
         id={id}
-        className={`h-24 w-24 caret-transparent ${handleDrawSquare()} ${handleDrawTextSquare()} ${handleActiveSquare()} ${
+        className={`h-24 w-24 caret-transparent ${handleDrawClass()} ${
           item && "cursor-grab"
         } `}
       >
-        {handleCheckPromotion() && (
+        {selectedChessPiece.handlePromotion && handleCheckPromotion() && (
           <Promotion
             turn={turn}
             setIsPromotion={setIsPromotion}
-            handlePawnPromotion={handlePawnPromotion}
+            handlePawnPromotion={selectedChessPiece.handlePromotion}
             position={selectedChessPiece.position}
             nextPosition={position}
           />

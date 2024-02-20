@@ -23,4 +23,5 @@ export const EMPTY_SELECTED: ISquare = {
   item: "",
   handleMove: () => {},
   handleTake: () => {},
+  handlePromotion: () => {},
 };

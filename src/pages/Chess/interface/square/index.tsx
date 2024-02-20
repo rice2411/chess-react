@@ -13,4 +13,10 @@ export interface ISquare {
     nextPosition: number[],
     nextItem: string
   ) => void;
+  handlePromotion?: (
+    item: string,
+    position: number[],
+    nextPosition: number[],
+    nextItem: string
+  ) => void;
 }

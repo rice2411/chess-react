@@ -12,16 +12,24 @@ import { initChessPiece } from "../../utils";
 import useHistory from "../../hooks/useHistory";
 import PawnService from "../../service/pawn";
 import ChessBoardSerivce from "../../service/chess_board";
+import RookService from "../../service/rook";
+import { IKingPosition } from "../../interface/base";
+import KingService from "../../service/king";
 
 function Board() {
   const { history, handleSetHistory }: any = useHistory();
 
   const [chessBoard, setChessBoard] = useState<string[][]>([[]]);
-  const [turn, setTurn] = useState(WHITE_TURN);
+  const [turn, setTurn] = useState<string>(WHITE_TURN);
   const [isDirty, setIsDirty] = useState(false);
   const [selectedChessPiece, setSelectedChessPiece] = useState(EMPTY_SELECTED);
   const [selectedPosition, setSelectedPosition] = useState([-1, -1]);
   const [isPromotion, setIsPromotion] = useState(false);
+  const [isChecking, setIsChecking] = useState(false);
+  const [kingPosition, setKingPosition] = useState<IKingPosition>({
+    w: [7, 4],
+    b: [0, 4],
+  });
 
   // Ma trận ô cờ 8x8
   const initMatrix = () => {
@@ -42,12 +50,14 @@ function Board() {
       setSelectedChessPiece(EMPTY_SELECTED);
       return;
     }
+
     //Lưu vị trí và quân cờ dc chọn
     const selectedSquare = {
       position,
       item,
-      handleTake: getFunctionOfChessPiece(item[1])?.handlePawnTake,
-      handleMove: getFunctionOfChessPiece(item[1])?.handlePawnMove,
+      handleTake: getFunctionOfChessPiece(item[1])?.handleTake,
+      handleMove: getFunctionOfChessPiece(item[1])?.handleMove,
+      handlePromotion: getFunctionOfChessPiece(item[1])?.handlePromotion,
     };
     setSelectedChessPiece(selectedSquare);
   };
@@ -61,8 +71,19 @@ function Board() {
     switch (type) {
       case "p":
         return {
-          handlePawnMove,
-          handlePawnTake,
+          handleMove: handlePawnMove,
+          handleTake: handlePawnTake,
+          handlePromotion: handlePromotion,
+        };
+      case "r":
+        return {
+          handleMove: handleRookMove,
+          handleTake: handleRookTake,
+        };
+      case "k":
+        return {
+          handleMove: handleKingMove,
+          handleTake: handleKingTake,
         };
     }
   };
@@ -83,8 +104,7 @@ function Board() {
     ) {
       return;
     }
-
-    PawnService.onPawnMove({
+    PawnService.onMove({
       position,
       nextPosition,
       chessBoard,
@@ -92,6 +112,9 @@ function Board() {
       nextItem,
       history,
       isPromotion,
+      kingPosition,
+      isChecking,
+      setIsChecking,
       setChessBoard,
       setIsDirty,
       handleToggleTurn,
@@ -111,13 +134,16 @@ function Board() {
       !ChessBoardSerivce.hanleValidationMove(turn, item, setSelectedChessPiece)
     )
       return;
-    PawnService.onPawnTake({
+    PawnService.onTake({
       position,
       nextPosition,
       chessBoard,
       item,
       nextItem,
       isPromotion,
+      kingPosition,
+      isChecking,
+      setIsChecking,
       setChessBoard,
       setIsDirty,
       handleToggleTurn,
@@ -127,23 +153,163 @@ function Board() {
     });
   };
 
-  const handlePawnPromotion = (
+  const handlePromotion = (
     item: string,
     position: number[],
     nextPosition: number[],
     nextItem: string
   ) => {
-    PawnService.onPawnPromotion({
+    PawnService.onPromotion({
       position,
       nextPosition,
       chessBoard,
       item,
       nextItem,
+      kingPosition,
+      isChecking,
+      setIsChecking,
       setChessBoard,
       setIsDirty,
       handleToggleTurn,
       handleSetHistory,
       setSelectedChessPiece,
+    });
+  };
+  //#endregion
+
+  //#region Logic của Xe
+  const handleRookMove = (
+    item: string,
+    position: number[],
+    nextPosition: number[],
+    nextItem: string
+  ) => {
+    if (
+      !ChessBoardSerivce.hanleValidationMove(
+        turn,
+        item,
+        setSelectedChessPiece,
+        isDirty
+      )
+    ) {
+      return;
+    }
+    RookService.onMove({
+      position,
+      nextPosition,
+      chessBoard,
+      item,
+      nextItem,
+      history,
+      kingPosition,
+      isChecking,
+      setIsChecking,
+      setChessBoard,
+      handleToggleTurn,
+      handleSetHistory,
+      setSelectedChessPiece,
+    });
+  };
+
+  const handleRookTake = (
+    item: string,
+    position: number[],
+    nextPosition: number[],
+    nextItem: string
+  ) => {
+    if (
+      !ChessBoardSerivce.hanleValidationMove(
+        turn,
+        item,
+        setSelectedChessPiece,
+        isDirty
+      )
+    ) {
+      return;
+    }
+    RookService.onTake({
+      position,
+      nextPosition,
+      chessBoard,
+      item,
+      nextItem,
+      kingPosition,
+      history,
+      isChecking,
+      setIsChecking,
+      setChessBoard,
+      handleToggleTurn,
+      handleSetHistory,
+      setSelectedChessPiece,
+    });
+  };
+  //#endregion
+
+  //#region Logic của vua
+  const handleKingMove = (
+    item: string,
+    position: number[],
+    nextPosition: number[],
+    nextItem: string
+  ) => {
+    if (
+      !ChessBoardSerivce.hanleValidationMove(
+        turn,
+        item,
+        setSelectedChessPiece,
+        isDirty
+      )
+    ) {
+      return;
+    }
+    KingService.onMove({
+      position,
+      nextPosition,
+      chessBoard,
+      item,
+      nextItem,
+      history,
+      kingPosition,
+      isChecking,
+      setIsChecking,
+      setChessBoard,
+      handleToggleTurn,
+      handleSetHistory,
+      setSelectedChessPiece,
+      setKingPosition,
+    });
+  };
+  const handleKingTake = (
+    item: string,
+    position: number[],
+    nextPosition: number[],
+    nextItem: string
+  ) => {
+    if (
+      !ChessBoardSerivce.hanleValidationMove(
+        turn,
+        item,
+        setSelectedChessPiece,
+        isDirty
+      )
+    ) {
+      return;
+    }
+    KingService.onTake({
+      position,
+      nextPosition,
+      chessBoard,
+      item,
+      nextItem,
+      kingPosition,
+      history,
+      isChecking,
+      setIsChecking,
+      setChessBoard,
+      handleToggleTurn,
+      handleSetHistory,
+      setSelectedChessPiece,
+      setKingPosition,
     });
   };
   //#endregion
@@ -168,7 +334,6 @@ function Board() {
                 selectedPosition={selectedPosition}
                 setSelectedPosition={setSelectedPosition}
                 setIsPromotion={setIsPromotion}
-                handlePawnPromotion={handlePawnPromotion}
                 selectedChessPiece={selectedChessPiece}
                 handleClickSquare={handleClickSquare}
               ></Square>

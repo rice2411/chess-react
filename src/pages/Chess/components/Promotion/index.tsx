@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import { getChessPieceImage } from "../../utils";
 import {
   BLACK_PROMOTION,
@@ -24,9 +24,8 @@ type Input = {
 function Promotion(input: Input) {
   const { position, nextPosition, setIsPromotion, handlePawnPromotion } = input;
 
-  const [promotions, setPromotions] = useState(
-    input.turn === WHITE_TURN ? WHITE_PROMOTION : BLACK_PROMOTION
-  );
+  const promotions =
+    input.turn === WHITE_TURN ? WHITE_PROMOTION : BLACK_PROMOTION;
 
   const ref: any = useRef(null);
 

@@ -1,9 +1,11 @@
 import { BLACK_TURN, EMPTY_SELECTED } from "../../constant/config";
 import { ETypeMove } from "../../enum/type_move";
+import { IKingPosition } from "../../interface/base";
 import { IHistory } from "../../interface/history";
 import { ISquare } from "../../interface/square";
+import KingService from "../king";
 
-type InputDrawBoard = {
+export type InputDrawBoard = {
   position: number[];
   nextPosition: number[];
   chessBoard: string[][];
@@ -12,6 +14,10 @@ type InputDrawBoard = {
   typeMove: ETypeMove;
   isSpecialTake?: boolean;
   lastMove?: IHistory;
+  kingPosition: IKingPosition;
+  isChecking: boolean;
+  setKingPosition?: (value: IKingPosition) => void;
+  setIsChecking: (value: boolean) => void;
   setChessBoard: (chessBoard: string[][]) => void;
   handleToggleTurn: (value: string) => void;
   setSelectedChessPiece: (value: ISquare) => void;
@@ -40,10 +46,14 @@ class ChessBoardService {
       typeMove,
       isSpecialTake,
       lastMove,
+      kingPosition,
+      isChecking,
       setChessBoard,
       handleToggleTurn,
       handleSetHistory,
       setSelectedChessPiece,
+      setKingPosition,
+      setIsChecking,
     } = input;
 
     // Clone the chessboard to avoid mutation
@@ -59,6 +69,18 @@ class ChessBoardService {
       newChessBoard[nextPosition[0]][nextPosition[1]] = item;
       newChessBoard[position[0]][position[1]] = "";
     }
+    const checkingObj = KingService.onHandleChecking(input, newChessBoard);
+    console.log(checkingObj);
+    if (checkingObj.isChecking && checkingObj.site === item[0]) return;
+    // if ((newIsChecking && !isChecking) || (!newIsChecking && isChecking)) {
+    //   setIsChecking(newIsChecking);
+    // } else if (newIsChecking && isChecking) {
+    //   return;
+    // }
+    const newKingPostion = { ...kingPosition };
+    // @ts-ignore
+    newKingPostion[item[0]] = nextPosition;
+    setKingPosition && setKingPosition(newKingPostion);
 
     // Set the new chessboard
     setChessBoard(newChessBoard);
@@ -82,10 +104,10 @@ class ChessBoardService {
     isDirty: boolean = true
   ) => {
     //Kiểm tra khi vào game, quân đen không được đi trước
-    if (this.handleFisrtMove(item, isDirty)) {
-      setSelectedChessPiece(EMPTY_SELECTED);
-      return false;
-    }
+    // if (this.handleFisrtMove(item, isDirty)) {
+    //   setSelectedChessPiece(EMPTY_SELECTED);
+    //   return false;
+    // }
     //Kiểm tra lượt chơi
     if (turn !== item[0]) {
       setSelectedChessPiece(EMPTY_SELECTED);

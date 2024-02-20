@@ -1,55 +1,38 @@
 import { BLACK_TURN, EMPTY_SELECTED, WHITE_TURN } from "../../constant/config";
 import { ETypeMove } from "../../enum/type_move";
-import { IHistory } from "../../interface/history";
-import { ISquare } from "../../interface/square";
+import { IPawnInput } from "../../interface/base/pawn";
 import ChessBoardService from "../chess_board";
 
-type InputPawnMove = {
-  position: number[];
-  nextPosition: number[];
-  chessBoard: string[][];
-  item: string;
-  nextItem: string;
-  history?: IHistory[];
-  isPromotion?: boolean;
-  setChessBoard: (chessBoard: string[][]) => void;
-  setIsDirty: (value: boolean) => void;
-  handleToggleTurn: (value: string) => void;
-  setSelectedChessPiece: (value: ISquare) => void;
-  setIsPromotion?: (value: boolean) => void;
-  handleSetHistory: (
-    position: number[],
-    item: string,
-    nextPosition: number[],
-    nextItem: string,
-    typeMove: ETypeMove
-  ) => void;
-};
 class PawnService {
   // Logic Tốt di chuyển
-  static onPawnMove = (input: InputPawnMove) => {
+  static onMove = (input: IPawnInput) => {
     const {
       item,
       position,
       nextPosition,
       chessBoard,
       nextItem,
+      isChecking,
       isPromotion,
+      kingPosition,
       setChessBoard,
       handleToggleTurn,
       handleSetHistory,
       setSelectedChessPiece,
       setIsDirty,
+      setIsChecking,
       setIsPromotion,
     } = input;
     // kiểm tra lượt đi của màu nào
     const isWhiteMove = item[0] === WHITE_TURN;
     // Tìm kiếm vị trí bắt đầu của quân tốt
-    const startPostion = isWhiteMove ? 6 : 1;
+    const startPosition = isWhiteMove ? 6 : 1;
     const rowMove = position[0] - nextPosition[0];
     const colMove = position[1] - nextPosition[1];
+    // vị trí chốt qua sông
+    const isAtTheBank = isWhiteMove ? position[0] === 3 : position[0] === 4;
     // Bắt chốt qua đường
-    if (Math.abs(rowMove) === 1 && Math.abs(colMove) === 1) {
+    if (isAtTheBank && Math.abs(rowMove) === 1 && Math.abs(colMove) === 1) {
       if (!this.onSpecialTake(input)) return;
     }
     // Ngăn chặn chốt đi lùi
@@ -60,7 +43,7 @@ class PawnService {
     // Tính giới hạn di chuyển của tốt
     const limitMove = Math.abs(rowMove);
     let isValidMove = false;
-    if (position[0] === startPostion) {
+    if (position[0] === startPosition) {
       //Tốt ở vị trí xuất phát có thể di 2 ô
       isValidMove =
         limitMove <= 2 && limitMove >= 1 && nextPosition[1] === position[1];
@@ -68,6 +51,7 @@ class PawnService {
       //Tốt không phải ở vị trí xuất phát chỉ có thể đi 1 ô
       isValidMove = limitMove === 1 && nextPosition[1] === position[1];
     }
+
     if (isValidMove) {
       // Vị trí tiếp theo phải ở 2 hàng cuối cùng, 1 và 8
       if ((nextPosition[0] === 7 || nextPosition[0] === 0) && !isPromotion) {
@@ -81,7 +65,10 @@ class PawnService {
         chessBoard,
         item,
         nextItem,
+        kingPosition,
+        isChecking,
         typeMove,
+        setIsChecking,
         setChessBoard,
         handleToggleTurn,
         handleSetHistory,
@@ -91,15 +78,18 @@ class PawnService {
     }
   };
   // Logic Phong cấp
-  static onPawnPromotion = (input: InputPawnMove) => {
+  static onPromotion = (input: IPawnInput) => {
     const {
       item,
       position,
       nextPosition,
       chessBoard,
       nextItem,
+      kingPosition,
+      isChecking,
       setChessBoard,
       handleToggleTurn,
+      setIsChecking,
       handleSetHistory,
       setSelectedChessPiece,
     } = input;
@@ -112,23 +102,29 @@ class PawnService {
       item,
       nextItem,
       typeMove,
+      isChecking,
+      kingPosition,
       setChessBoard,
+      setIsChecking,
       handleToggleTurn,
       handleSetHistory,
       setSelectedChessPiece,
     });
   };
   // Logic bắt tốt qua đường
-  static onSpecialTake = (input: InputPawnMove) => {
+  static onSpecialTake = (input: IPawnInput) => {
     const {
       item,
       position,
       nextPosition,
       history,
       chessBoard,
+      kingPosition,
+      isChecking,
       nextItem,
       setChessBoard,
       handleToggleTurn,
+      setIsChecking,
       handleSetHistory,
       setSelectedChessPiece,
     } = input;
@@ -175,11 +171,14 @@ class PawnService {
           nextPosition,
           chessBoard,
           item,
+          kingPosition,
           nextItem,
           typeMove,
           isSpecialTake,
+          isChecking,
           lastMove,
           setChessBoard,
+          setIsChecking,
           handleToggleTurn,
           handleSetHistory,
           setSelectedChessPiece,
@@ -190,7 +189,7 @@ class PawnService {
     return false;
   };
   // Logic Tốt Ăn Quân
-  static onPawnTake = (input: InputPawnMove) => {
+  static onTake = (input: IPawnInput) => {
     const {
       position,
       nextPosition,
@@ -198,18 +197,22 @@ class PawnService {
       item,
       nextItem,
       isPromotion,
+      isChecking,
+      kingPosition,
       setIsPromotion,
       setChessBoard,
       handleToggleTurn,
+      setIsChecking,
       handleSetHistory,
       setSelectedChessPiece,
     } = input;
+    //phải có quân mới được ăn
+    if (!nextItem) return;
     // Kiểm tra lượt đi
     const isWhiteMove = item[0] === WHITE_TURN;
     //Lấy khoảng cách  tốt di chuyển
     const rowMove = position[0] - nextPosition[0];
     const colMove = position[1] - nextPosition[1];
-
     if (
       (isWhiteMove && (rowMove <= 0 || rowMove > 1 || colMove > 1)) ||
       (!isWhiteMove && colMove >= 0 && colMove < 1) ||
@@ -219,7 +222,11 @@ class PawnService {
       setSelectedChessPiece(EMPTY_SELECTED);
       return;
     }
-    if ((nextPosition[0] === 7 || nextPosition[0] === 0) && !isPromotion) {
+    if (
+      (nextPosition[0] === 7 || nextPosition[0] === 0) &&
+      !isPromotion &&
+      nextItem
+    ) {
       setIsPromotion && setIsPromotion(true);
       return;
     }
@@ -235,7 +242,10 @@ class PawnService {
         item,
         nextItem,
         typeMove,
+        isChecking,
+        kingPosition,
         setChessBoard,
+        setIsChecking,
         handleToggleTurn,
         handleSetHistory,
         setSelectedChessPiece,
