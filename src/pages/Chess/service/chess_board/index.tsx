@@ -69,29 +69,15 @@ class ChessBoardService {
       newChessBoard[nextPosition[0]][nextPosition[1]] = item;
       newChessBoard[position[0]][position[1]] = "";
     }
+
     const checkingObj = KingService.onHandleChecking(input, newChessBoard);
 
-    if (!isChecking) {
-      if (checkingObj.isKingMove) {
-        if (checkingObj.isChecking) return;
-      } else {
-        // console.log(isChecking);
-        // if (isChecking && !checkingObj.isKingMove) {
-        //   if (item[0] === checkingObj.site) {
-        //     return;
-        //   }
-        // }
-        setIsChecking(checkingObj.isChecking);
-      }
-    }
-    console.log(checkingObj);
+    // console.log(checkingObj);
 
-    // if (checkingObj.isChecking && checkingObj.site === item[0]) return;
-    // if ((newIsChecking && !isChecking) || (!newIsChecking && isChecking)) {
-    //   setIsChecking(newIsChecking);
-    // } else if (newIsChecking && isChecking) {
-    //   return;
-    // }
+    if (!checkingObj.isSelfSafe) return;
+
+    setIsChecking(!checkingObj.isEnemySafe);
+
     const newKingPostion = { ...kingPosition };
     // @ts-ignore
     newKingPostion[item[0]] = nextPosition;

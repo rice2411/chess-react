@@ -6,7 +6,7 @@ import { IRookInput } from "../../interface/base/rook";
 import ChessBoardService, { InputDrawBoard } from "../chess_board";
 
 class KingService {
-  // Logic Xe di chuyển
+  // Logic  di chuyển
   static onMove = (input: IKingInput) => {
     const {
       item,
@@ -49,7 +49,7 @@ class KingService {
     }
   };
 
-  // Logic Tốt Ăn Quân
+  // Logic  Ăn Quân
   static onTake = (input: IKingInput) => {
     const {
       position,
@@ -89,7 +89,7 @@ class KingService {
       });
     }
   };
-
+  // Kiểm tra nước đi
   static onValidateMove = (input: IRookInput) => {
     const { position, nextPosition } = input;
 
@@ -110,7 +110,7 @@ class KingService {
     }
     return true;
   };
-
+  // Kiểm tra chiếu
   static onHandleChecking = (
     input: InputDrawBoard,
     newChessBoard: string[][]
@@ -119,90 +119,135 @@ class KingService {
     // Có phải nước đi là di chuyển vua không
     const isKingMove = item[1] === "k";
     // Lấy lượt đi tiếp theo
-    const nextTurn = item[0] === WHITE_TURN ? BLACK_TURN : WHITE_TURN;
+    const turn = item[0];
+    const nextTurn = turn === WHITE_TURN ? BLACK_TURN : WHITE_TURN;
     // @ts-ignore
-    const nextKingPosition = isKingMove ? nextPosition : kingPosition[nextTurn];
+    const selfNextKingPosition = isKingMove ? nextPosition : kingPosition[turn];
+    // @ts-ignore
+    const enemyNextKingPosition = kingPosition[nextTurn];
+    // Lấy vị trí của 2 vua
+    const kingRow = selfNextKingPosition[0];
+    const kingCol = selfNextKingPosition[1];
+    const enemyKingRow = enemyNextKingPosition[0];
+    const enemyKingCol = enemyNextKingPosition[1];
+    // Kiểm vua có an toàn không
+    const isSelfSafe = this.onSafeKing(kingRow, kingCol, newChessBoard);
+    const isEnemySafe = this.onSafeKing(
+      enemyKingRow,
+      enemyKingCol,
+      newChessBoard
+    );
+
+    return {
+      isSelfSafe,
+      isEnemySafe,
+    };
+  };
+  // Kiểm tra vua
+  static onSafeKing = (
+    kingRow: number,
+    kingCol: number,
+    newChessBoard: string[][]
+  ) => {
+    const kingSite = newChessBoard[kingRow][kingCol][0];
+
+    const leftTop =
+      newChessBoard[kingRow === 0 ? kingRow : kingRow - 1][kingCol] || "";
+    const rightTop =
+      newChessBoard[kingRow === 7 ? kingRow : kingRow + 1][kingCol] || "";
+    const leftBottom =
+      newChessBoard[kingRow][kingCol === 0 ? kingCol : kingCol - 1] || "";
+    const rightBottom =
+      newChessBoard[kingRow][kingCol === 7 ? kingCol : kingCol + 1] || "";
+
+    console.log(leftTop);
+    console.log(rightTop);
+    console.log(leftBottom);
+    console.log(rightBottom);
+
+    let tempCheck = true;
+    if (kingSite === WHITE_TURN) {
+      const isKingOrPawn =
+        leftTop === "p" ||
+        rightTop === "p" ||
+        leftTop === "k" ||
+        rightTop === "k";
+      tempCheck = !isKingOrPawn;
+    } else {
+      const isKingOrPawn =
+        leftBottom === "p" ||
+        rightBottom === "p" ||
+        leftBottom === "k" ||
+        rightBottom === "k";
+      tempCheck = !isKingOrPawn;
+    }
+    const horizontalVerticalCheck = this.onHorizontalVerticalCheck(
+      kingRow,
+      kingCol,
+      newChessBoard
+    );
+    // console.log(tempCheck);
+    return horizontalVerticalCheck;
+  };
+
+  static onHorizontalVerticalCheck = (
+    kingRow: number,
+    kingCol: number,
+    newChessBoard: string[][]
+  ) => {
     // Giá trị thấp và cao nhất của hàng và cột có thể di chuyển
     const minPosition = 0;
     const maxPosition = 7;
-    // Lấy vị trí của vua
-    const kingRow = nextKingPosition[0];
-    const kingCol = nextKingPosition[1];
-    // Tạo biến lưu dữ liệu kiểm tra
-    const result = {
-      isChecking: false,
-      site: "w",
-      isKingMove: false,
-    };
-    // Kiểm tra bên phải vua
+
+    const kingSite = newChessBoard[kingRow][kingCol][0];
+
     for (let i = kingCol + 1; i <= maxPosition; i++) {
       const enemyItem = newChessBoard[kingRow][i];
       const isRookOrQueen = enemyItem[1] === "r" || enemyItem[1] === "q";
-      const isEnemy = item[0] !== enemyItem[0];
+      if (enemyItem[1] && !isRookOrQueen) {
+        return true;
+      }
+      const isEnemy = kingSite !== enemyItem[0];
       if (isRookOrQueen && isEnemy) {
-        if (isKingMove) {
-          result.isChecking = true;
-          result.site = item[0];
-          result.isKingMove = true;
-        } else {
-          result.isChecking = true;
-          result.site = nextTurn;
-          result.isKingMove = false;
-        }
+        return false;
       }
     }
     // Kiểm tra bên trái vua
     for (let i = kingCol - 1; i >= minPosition; i--) {
       const enemyItem = newChessBoard[kingRow][i];
       const isRookOrQueen = enemyItem[1] === "r" || enemyItem[1] === "q";
-      const isEnemy = item[0] !== enemyItem[0];
+      if (enemyItem[1] && !isRookOrQueen) {
+        return true;
+      }
+      const isEnemy = kingSite !== enemyItem[0];
       if (isRookOrQueen && isEnemy) {
-        if (isKingMove) {
-          result.isChecking = true;
-          result.site = item[0];
-          result.isKingMove = true;
-        } else {
-          result.isChecking = true;
-          result.site = nextTurn;
-          result.isKingMove = false;
-        }
+        return false;
       }
     }
     // Kiểm tra phía sau vua
     for (let i = kingRow + 1; i <= maxPosition; i++) {
       const enemyItem = newChessBoard[i][kingCol];
       const isRookOrQueen = enemyItem[1] === "r" || enemyItem[1] === "q";
-      const isEnemy = item[0] !== enemyItem[0];
+      if (enemyItem[1] && !isRookOrQueen) {
+        return true;
+      }
+      const isEnemy = kingSite !== enemyItem[0];
       if (isRookOrQueen && isEnemy) {
-        if (isKingMove) {
-          result.isChecking = true;
-          result.site = item[0];
-          result.isKingMove = true;
-        } else {
-          result.isChecking = true;
-          result.site = nextTurn;
-          result.isKingMove = false;
-        }
+        return false;
       }
     }
     //Kiểm tra phía trước vua
     for (let i = kingRow - 1; i >= minPosition; i--) {
       const enemyItem = newChessBoard[i][kingCol];
       const isRookOrQueen = enemyItem[1] === "r" || enemyItem[1] === "q";
-      const isEnemy = item[0] !== enemyItem[0];
+      if (enemyItem[1] && !isRookOrQueen) {
+        return true;
+      }
+      const isEnemy = kingSite !== enemyItem[0];
       if (isRookOrQueen && isEnemy) {
-        if (isKingMove) {
-          result.isChecking = true;
-          result.site = item[0];
-          result.isKingMove = true;
-        } else {
-          result.isChecking = true;
-          result.site = nextTurn;
-          result.isKingMove = false;
-        }
+        return false;
       }
     }
-    return result;
   };
 }
 
