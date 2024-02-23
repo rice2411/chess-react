@@ -72,7 +72,7 @@ class ChessBoardService {
 
     const checkingObj = KingService.onHandleChecking(input, newChessBoard);
 
-    // console.log(checkingObj);
+    console.log(checkingObj);
 
     if (!checkingObj.isSelfSafe) return;
 

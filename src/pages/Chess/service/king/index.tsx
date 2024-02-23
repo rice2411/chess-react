@@ -137,7 +137,6 @@ class KingService {
       enemyKingCol,
       newChessBoard
     );
-
     return {
       isSelfSafe,
       isEnemySafe,
@@ -149,45 +148,70 @@ class KingService {
     kingCol: number,
     newChessBoard: string[][]
   ) => {
-    const kingSite = newChessBoard[kingRow][kingCol][0];
-
-    const leftTop =
-      newChessBoard[kingRow === 0 ? kingRow : kingRow - 1][kingCol] || "";
-    const rightTop =
-      newChessBoard[kingRow === 7 ? kingRow : kingRow + 1][kingCol] || "";
-    const leftBottom =
-      newChessBoard[kingRow][kingCol === 0 ? kingCol : kingCol - 1] || "";
-    const rightBottom =
-      newChessBoard[kingRow][kingCol === 7 ? kingCol : kingCol + 1] || "";
-
-    console.log(leftTop);
-    console.log(rightTop);
-    console.log(leftBottom);
-    console.log(rightBottom);
-
-    let tempCheck = true;
-    if (kingSite === WHITE_TURN) {
-      const isKingOrPawn =
-        leftTop === "p" ||
-        rightTop === "p" ||
-        leftTop === "k" ||
-        rightTop === "k";
-      tempCheck = !isKingOrPawn;
-    } else {
-      const isKingOrPawn =
-        leftBottom === "p" ||
-        rightBottom === "p" ||
-        leftBottom === "k" ||
-        rightBottom === "k";
-      tempCheck = !isKingOrPawn;
-    }
     const horizontalVerticalCheck = this.onHorizontalVerticalCheck(
       kingRow,
       kingCol,
       newChessBoard
     );
-    // console.log(tempCheck);
-    return horizontalVerticalCheck;
+    const aroundCheck = this.onAroundCheck(kingRow, kingCol, newChessBoard);
+    return horizontalVerticalCheck && aroundCheck;
+  };
+
+  static onAroundCheck = (
+    kingRow: number,
+    kingCol: number,
+    newChessBoard: string[][]
+  ): boolean => {
+    const kingSite = newChessBoard[kingRow][kingCol][0];
+
+    const leftTop =
+      kingRow !== 0 && kingCol !== 0
+        ? newChessBoard[kingRow - 1][kingCol - 1]
+        : "";
+    const leftBottom =
+      kingRow !== 7 && kingCol !== 0
+        ? newChessBoard[kingRow + 1][kingCol - 1]
+        : "";
+    const rightTop =
+      kingRow !== 0 && kingCol !== 7
+        ? newChessBoard[kingRow - 1][kingCol + 1]
+        : "";
+    const rightBottom =
+      kingRow !== 7 && kingCol !== 7
+        ? newChessBoard[kingRow + 1][kingCol + 1]
+        : "";
+    const left = kingCol !== 0 ? newChessBoard[kingRow][kingCol - 1] : "";
+    const right = kingCol !== 7 ? newChessBoard[kingRow][kingCol + 1] : "";
+    const top = kingRow !== 0 ? newChessBoard[kingRow - 1][kingCol] : "";
+    const bottom = kingRow !== 7 ? newChessBoard[kingRow + 1][kingCol] : "";
+
+    if (kingSite === WHITE_TURN) {
+      const isKingOrPawn =
+        leftTop === "bp" ||
+        rightTop === "bp" ||
+        leftTop === "bk" ||
+        rightTop === "bk" ||
+        leftBottom === "bk" ||
+        rightBottom === "bk" ||
+        left === "bk" ||
+        right === "bk" ||
+        bottom === "bk" ||
+        top === "bk";
+      return !isKingOrPawn;
+    } else {
+      const isKingOrPawn =
+        leftBottom === "wp" ||
+        rightBottom === "wp" ||
+        leftBottom === "wk" ||
+        rightBottom === "wk" ||
+        leftTop === "wk" ||
+        rightTop === "wk" ||
+        left === "wk" ||
+        right === "wk" ||
+        bottom === "wk" ||
+        top === "wk";
+      return !isKingOrPawn;
+    }
   };
 
   static onHorizontalVerticalCheck = (
@@ -200,7 +224,6 @@ class KingService {
     const maxPosition = 7;
 
     const kingSite = newChessBoard[kingRow][kingCol][0];
-
     for (let i = kingCol + 1; i <= maxPosition; i++) {
       const enemyItem = newChessBoard[kingRow][i];
       const isRookOrQueen = enemyItem[1] === "r" || enemyItem[1] === "q";
@@ -248,6 +271,7 @@ class KingService {
         return false;
       }
     }
+    return true;
   };
 }
 
